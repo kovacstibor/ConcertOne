@@ -16,8 +16,7 @@ namespace ConcertOne.Bll.Service
         Task PurchaseTicketAsync(
             Guid userid,
             Guid concertId,
-            Guid ticketCategoryId,
-            int numberOfTickets,
+            Dictionary<Guid, int> purchases,
             CancellationToken cancellationToken = default( CancellationToken ) );
     }
 }

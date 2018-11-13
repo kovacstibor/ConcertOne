@@ -74,7 +74,7 @@ namespace ConcertOne.Web.Controllers
         {
             try
             {
-                Guid userId = await GetCurrentUserId();
+                Guid userId = await GetCurrentUserIdAsync();
                 await _concertService.CreateConcertAsync(
                     concert: concert,
                     userId: userId );
@@ -99,7 +99,7 @@ namespace ConcertOne.Web.Controllers
         {
             try
             {
-                Guid userId = await GetCurrentUserId();
+                Guid userId = await GetCurrentUserIdAsync();
                 await _concertService.UpdateConcertAsync(
                     concertId: id,
                     modifiedConcert: concert,
@@ -136,7 +136,7 @@ namespace ConcertOne.Web.Controllers
             }
         }
 
-        private async Task<Guid> GetCurrentUserId()
+        private async Task<Guid> GetCurrentUserIdAsync()
         {
             User currentUser = await _userManager.GetUserAsync( User );
             if (currentUser == null)
