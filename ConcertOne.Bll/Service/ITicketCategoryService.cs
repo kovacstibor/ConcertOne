@@ -14,6 +14,7 @@ namespace ConcertOne.Bll.Service
 
         Task CreateTicketCategoryAsync(
             TicketCategoryDataDto ticketCategory,
+            Guid userId,
             CancellationToken cancellationToken = default( CancellationToken ) );
 
         Task DeleteTicketCategoryAsync(

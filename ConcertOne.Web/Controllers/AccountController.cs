@@ -47,7 +47,7 @@ namespace ConcertOne.Web.Controllers
             }
         }
 
-        [Authorize]
+        [Authorize( Roles = "NORMAL,PRIVILEDGED" )]
         [HttpPost]
         [Route( "api/v1/" + AccountController.Name + "/Logout" )]
         public async Task<IActionResult> LogoutAsync()

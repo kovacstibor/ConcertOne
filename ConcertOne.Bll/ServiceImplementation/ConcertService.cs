@@ -155,7 +155,7 @@ namespace ConcertOne.Bll.ServiceImplementation
             }
             catch
             {
-                throw new BllException( "Error while modifying a concert!" );
+                throw new BllException( "Error while updating a concert!" );
             }
         }
     }
