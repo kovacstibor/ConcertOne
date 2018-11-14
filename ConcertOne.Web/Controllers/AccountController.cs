@@ -35,7 +35,7 @@ namespace ConcertOne.Web.Controllers
             try
             {
                 await _accountService.LoginAsync( login.EmailAddress, login.Password );
-                return StatusCode( 204 );
+                return StatusCode( User.IsInRole( "PRIVILEDGED" ) ? 201 : 204 );
             }
             catch (BllException)
             {
