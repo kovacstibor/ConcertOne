@@ -49,6 +49,10 @@ namespace ConcertOne.Web
             services.AddMvc()
                 .SetCompatibilityVersion( CompatibilityVersion.Version_2_1 );
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy( builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod() );
+            } );
 
             // Register .Common services
             services.AddSingleton<IClock, Clock>();
@@ -84,6 +88,8 @@ namespace ConcertOne.Web
             applicationPipeline.UseCookiePolicy();
 
             applicationPipeline.UseAuthentication();
+
+            applicationPipeline.UseCors();
 
             applicationPipeline.UseMvc();
 
