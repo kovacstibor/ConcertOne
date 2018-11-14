@@ -1,16 +1,10 @@
-﻿using ConcertOne.Dal.Behavior;
-using ConcertOne.Dal.Entity;
+﻿using ConcertOne.Dal.Entity;
 using ConcertOne.Dal.Identity;
 
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ConcertOne.Dal.DataContext
 {
@@ -18,7 +12,7 @@ namespace ConcertOne.Dal.DataContext
     {
         public DbSet<Concert> Concerts { get; set; }
 
-        public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<ConcertTag> ConcertTags { get; set; }
 
         public DbSet<TicketCategory> TicketCategories { get; set; }
 
@@ -36,41 +30,12 @@ namespace ConcertOne.Dal.DataContext
         {
             // Configure business entities
             ConfigureConcertEntity( builder: builder );
-            ConfigureTicketEntity( builder: builder );
             ConfigureTicketCategoryEntity( builder: builder );
+            ConfigureTicketPurchaseEntity( builder: builder );
 
             // Configure identity entities
             ConfigureUserEntity( builder: builder );
             base.OnModelCreating( builder: builder );
-        }
-
-        public Task<int> SaveChangesAsync(
-            Guid modifierId,
-            DateTime currentTime,
-            CancellationToken cancellationToken = default( CancellationToken ) )
-        {
-            IEnumerable<IAuditable> createdEntities = ChangeTracker.Entries()
-                                                                   .Where( e => e.State == EntityState.Added )
-                                                                   .Where( e => e.Entity is IAuditable )
-                                                                   .Select( e => e.Entity as IAuditable );
-            IEnumerable<IAuditable> modifiedEntities = ChangeTracker.Entries()
-                                                                    .Where( e => e.State == EntityState.Modified )
-                                                                    .Where( e => e.Entity is IAuditable )
-                                                                    .Select( e => e.Entity as IAuditable );
-
-            foreach (IAuditable createdEntity in createdEntities)
-            {
-                createdEntity.CreatorId = modifierId;
-                createdEntity.CreationTime = currentTime;
-            }
-
-            foreach (IAuditable modifiedEntity in modifiedEntities)
-            {
-                modifiedEntity.LastModifierId = modifierId;
-                modifiedEntity.LastModificationTime = currentTime;
-            }
-
-            return SaveChangesAsync( cancellationToken: cancellationToken );
         }
 
         private void ConfigureUserEntity( ModelBuilder builder )
@@ -81,24 +46,23 @@ namespace ConcertOne.Dal.DataContext
 
         private void ConfigureConcertEntity( ModelBuilder builder )
         {
+            builder.Entity<Concert>().HasMany( c => c.ConcertTags )
+                                     .WithOne( ct => ct.Concert ).HasForeignKey( ct => ct.ConcertId );
+
             builder.Entity<Concert>().HasMany( c => c.TicketLimits )
                                      .WithOne( tl => tl.Concert ).HasForeignKey( tl => tl.ConcertId );
-            builder.Entity<Concert>().HasMany( c => c.TicketPurchases )
-                                     .WithOne( tp => tp.Concert ).HasForeignKey( tp => tp.ConcertId );
         }
 
         private void ConfigureTicketCategoryEntity( ModelBuilder builder )
         {
             builder.Entity<TicketCategory>().HasMany( c => c.TicketLimits )
                                             .WithOne( tl => tl.TicketCategory ).HasForeignKey( tl => tl.TicketCategoryId );
-            builder.Entity<TicketCategory>().HasMany( c => c.Tickets )
-                                            .WithOne( t => t.TicketCategory ).HasForeignKey( t => t.TicketCategoryId );
         }
 
-        private void ConfigureTicketEntity( ModelBuilder builder )
+        private void ConfigureTicketPurchaseEntity( ModelBuilder builder )
         {
-            builder.Entity<Ticket>().HasOne( t => t.TicketPurchase )
-                                    .WithMany( tp => tp.Tickets ).HasForeignKey( t => t.TicketPurchaseId );
+            builder.Entity<TicketPurchase>().HasOne( tp => tp.TicketLimit )
+                                            .WithMany( tl => tl.TicketPurchases ).HasForeignKey( tp => tp.TicketLimitId );
         }
     }
 }

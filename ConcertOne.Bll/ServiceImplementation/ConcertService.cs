@@ -1,11 +1,10 @@
-﻿using ConcertOne.Bll.Dto;
+﻿using ConcertOne.Bll.Dto.Concert;
 using ConcertOne.Bll.Exception;
 using ConcertOne.Bll.Service;
 using ConcertOne.Common.ServiceInterface;
 using ConcertOne.Dal.DataContext;
 using ConcertOne.Dal.Entity;
-using ConcertOne.Dal.Identity;
-using Microsoft.AspNetCore.Identity;
+
 using Microsoft.EntityFrameworkCore;
 
 using System;
@@ -23,140 +22,213 @@ namespace ConcertOne.Bll.ServiceImplementation
 
         public ConcertService(
             IClock clock,
-            ConcertOneDbContext concertOneDbContext)
+            ConcertOneDbContext concertOneDbContext )
         {
             _clock = clock ?? throw new ArgumentNullException( nameof( clock ) );
             _concertOneDbContext = concertOneDbContext ?? throw new ArgumentNullException( nameof( concertOneDbContext ) );
         }
 
         public async Task CreateConcertAsync(
-            ConcertDataDto concert,
+            CreateUpdateConcertDto concert,
             Guid userId,
             CancellationToken cancellationToken = default( CancellationToken ) )
         {
-            if (concert.AvailableTickets.Any( at => at.Value <= 0 ))
+            if (concert.TicketLimits.Any( tl => tl.Limit < 0 ))
             {
-                throw new BllException( "Ticket limits must be positive!" );
+                throw new BllException( "Ticket limits must be non-negative!" );
+            }
+
+            if (concert.TicketLimits.Any( tl => tl.UnitPrice < 0 ))
+            {
+                throw new BllException( "Ticket prices must be non-negative!" );
             }
 
             Concert newConcert = new Concert
             {
                 Artist = concert.Artist,
-                AttachedImageUrl = concert.AttachedImageUrl,
                 Description = concert.Description,
                 Location = concert.Location,
                 StartTime = concert.StartTime,
                 CreatorId = userId,
                 CreationTime = _clock.Now
             };
-            newConcert.TicketLimits = concert.AvailableTickets.Select( at => new TicketLimit
+            foreach (TicketLimitDto limit in concert.TicketLimits.Where( tl => tl.Limit > 0 ))
             {
-                Concert = newConcert,
-                Limit = at.Value,
-                TicketCategoryId = at.Key,
-                CreatorId = userId,
-                CreationTime = _clock.Now
-            } ).ToList();
+                newConcert.TicketLimits.Add( new TicketLimit
+                {
+                    Limit = limit.Limit,
+                    UnitPrice = limit.UnitPrice,
+                    TicketCategoryId = limit.TicketCategoryId,
+                    Concert = newConcert,
+                    CreatorId = userId,
+                    CreationTime = _clock.Now
+                } );
+            }
+            foreach (string concertTag in concert.Tags)
+            {
+                newConcert.ConcertTags.Add( new ConcertTag
+                {
+                    Name = concertTag,
+                    Concert = newConcert,
+                    CreatorId = userId,
+                    CreationTime = _clock.Now
+                } );
+            }
 
             _concertOneDbContext.Concerts.Add( newConcert );
-
-            try
-            {
-                await _concertOneDbContext.SaveChangesAsync( cancellationToken );
-            }
-            catch
-            {
-                throw new BllException( "Error while creating the concert!" );
-            }
+            await _concertOneDbContext.SaveChangesAsync( cancellationToken );
         }
 
         public async Task DeleteConcertAsync(
             Guid concertId,
             CancellationToken cancellationToken = default( CancellationToken ) )
         {
-            Concert concertToDelete = await _concertOneDbContext.Concerts
-                                                .Include( c => c.TicketLimits )
-                                                .Include( c => c.TicketPurchases )
-                                                .Where( c => c.Id == concertId )
-                                                .SingleOrDefaultAsync( cancellationToken );
-
-            if (concertToDelete == null)
+            bool hasPurchasedTicket = await _concertOneDbContext.TicketPurchases
+                                                .Where( tp => tp.TicketLimit.ConcertId == concertId )
+                                                .AnyAsync( cancellationToken );
+            if (hasPurchasedTicket)
             {
-                throw new BllException( "Concert not found!" );
+                throw new BllException( "Concert cannot be deleted, as there are purchased tickets!" );
             }
 
-            if (concertToDelete.TicketPurchases.Any())
+            Concert concert = await _concertOneDbContext.Concerts
+                                        .Include( c => c.TicketLimits )
+                                        .Where( c => c.Id == concertId )
+                                        .SingleOrDefaultAsync( cancellationToken );
+            if (concert == null)
             {
-                throw new BllException( "Concert with purchased ticket cannot be deleted!" );
+                return;
             }
 
-            _concertOneDbContext.TicketLimits.RemoveRange( concertToDelete.TicketLimits );
-            _concertOneDbContext.Concerts.Remove( concertToDelete );
-            try
-            {
-                await _concertOneDbContext.SaveChangesAsync( cancellationToken );
-            }
-            catch
-            {
-                new BllException( "Error while deleting a concert!" );
-            }
+            _concertOneDbContext.TicketLimits.RemoveRange( concert.TicketLimits );
+            _concertOneDbContext.Concerts.Remove( concert );
+            await _concertOneDbContext.SaveChangesAsync( cancellationToken );
         }
 
-        public async Task<Concert> GetConcertDetailsAsync(
+        public async Task<ConcertDetailsDto> GetConcertDetailsAsync(
             Guid concertId,
             CancellationToken cancellationToken = default( CancellationToken ) )
         {
-            return await _concertOneDbContext.Concerts
-                            .AsNoTracking()
-                            .Include( c => c.TicketLimits )
-                                .ThenInclude( tl => tl.TicketCategory )
-                            .Where( c => c.Id == concertId )
-                            .SingleOrDefaultAsync( cancellationToken );
+            Concert concert = await _concertOneDbContext.Concerts
+                                        .AsNoTracking()
+                                        .Include( c => c.ConcertTags )
+                                        .Include( c => c.TicketLimits )
+                                            .ThenInclude( tl => tl.TicketCategory )
+                                        .Include( c => c.TicketLimits )
+                                            .ThenInclude( tl => tl.TicketPurchases )
+                                        .Where( c => c.Id == concertId )
+                                        .SingleOrDefaultAsync( cancellationToken );
+            if (concert == null)
+            {
+                throw new BllException( "Concert does not exists!" );
+            }
+
+            return new ConcertDetailsDto
+            {
+                Id = concert.Id,
+                Artist = concert.Artist,
+                Description = concert.Description,
+                Location = concert.Location,
+                StartTime = concert.StartTime,
+                AvailableTickets = concert.TicketLimits.Select( tl => new TicketLimitDto
+                {
+                    IsAvailable = tl.TicketPurchases.Count < tl.Limit,
+                    Limit = tl.Limit,
+                    UnitPrice = tl.UnitPrice,
+                    TicketCategoryId = tl.TicketCategoryId.Value,
+                    TicketCategoryName = tl.TicketCategory.Name
+                } ).ToList(),
+                Tags = concert.ConcertTags.Select( ct => ct.Name ).ToList()
+            };
         }
 
-        public async Task<IEnumerable<Concert>> GetConcertsAsync( CancellationToken cancellationToken = default( CancellationToken ) )
+        public async Task<IEnumerable<ConcertListItemDto>> GetConcertsAsync( CancellationToken cancellationToken = default( CancellationToken ) )
         {
-            return await _concertOneDbContext.Concerts
-                            .AsNoTracking()
-                            .ToListAsync( cancellationToken );
+            List<Concert> concerts = await _concertOneDbContext.Concerts
+                                                .AsNoTracking()
+                                                .Include( c => c.ConcertTags )
+                                                .Include( c => c.TicketLimits )
+                                                    .ThenInclude( tl => tl.TicketCategory )
+                                                .ToListAsync( cancellationToken );
+
+            return concerts.Select( c => new ConcertListItemDto
+            {
+                Id = c.Id,
+                Artist = c.Artist,
+                Location = c.Location,
+                StartTime = c.StartTime,
+                AvailableTickets = c.TicketLimits.ToDictionary(
+                    keySelector: tl => tl.TicketCategory.Name,
+                    elementSelector: tl => tl.UnitPrice ),
+                Tags = c.ConcertTags.Select( ct => ct.Name ).ToList()
+            } );
         }
 
         public async Task UpdateConcertAsync(
             Guid concertId,
-            ConcertDataDto modifiedConcert,
+            CreateUpdateConcertDto concert,
             Guid userId,
             CancellationToken cancellationToken = default( CancellationToken ) )
         {
-            if (modifiedConcert.AvailableTickets.Any( at => at.Value <= 0 ))
+            if (concert.TicketLimits.Any( tl => tl.Limit <= 0 ))
             {
                 throw new BllException( "Ticket limits must be positive!" );
             }
 
-            Concert concertToModify = await _concertOneDbContext.Concerts
-                                                .Include( c => c.TicketLimits )
-                                                .Where( c => c.Id == concertId )
-                                                .SingleAsync( cancellationToken );
-
-            _concertOneDbContext.TicketLimits.RemoveRange( concertToModify.TicketLimits );
-            _concertOneDbContext.TicketLimits.AddRange( modifiedConcert.AvailableTickets.Select( at => new TicketLimit
+            if (concert.TicketLimits.Any( tl => tl.UnitPrice < 0 ))
             {
-                Concert = concertToModify,
-                Limit = at.Value,
-                TicketCategoryId = at.Key,
-                CreatorId = userId,
-                CreationTime = _clock.Now,
-            } ) );
-            concertToModify.LastModificationTime = _clock.Now;
-            concertToModify.LastModifierId = userId;
-
-            try
-            {
-                await _concertOneDbContext.SaveChangesAsync( cancellationToken );
+                throw new BllException( "Ticket prices must be non-negatives!" );
             }
-            catch
+
+            bool hasPurchasedTicket = await _concertOneDbContext.TicketPurchases
+                                                .Where( tp => tp.TicketLimit.ConcertId == concertId )
+                                                .AnyAsync( cancellationToken );
+            if (hasPurchasedTicket)
             {
-                throw new BllException( "Error while updating a concert!" );
+                throw new BllException( "Concert cannot be updated, as there are purchased tickets!" );
             }
+
+            Concert oldConcert = await _concertOneDbContext.Concerts
+                                            .Include( c => c.ConcertTags )
+                                            .Include( c => c.TicketLimits )
+                                            .Where( c => c.Id == concertId )
+                                            .SingleAsync( cancellationToken );
+
+            _concertOneDbContext.TicketLimits.RemoveRange( oldConcert.TicketLimits );
+            _concertOneDbContext.ConcertTags.RemoveRange( oldConcert.ConcertTags );
+
+            oldConcert.Artist = concert.Artist;
+            oldConcert.Description = concert.Description;
+            oldConcert.Location = concert.Location;
+            oldConcert.StartTime = concert.StartTime;
+            oldConcert.LastModifierId = userId;
+            oldConcert.LastModificationTime = _clock.Now;
+            oldConcert.ConcertTags.Clear();
+            oldConcert.TicketLimits.Clear();
+            foreach (TicketLimitDto limit in concert.TicketLimits)
+            {
+                oldConcert.TicketLimits.Add( new TicketLimit
+                {
+                    Limit = limit.Limit,
+                    UnitPrice = limit.UnitPrice,
+                    TicketCategoryId = limit.TicketCategoryId,
+                    Concert = oldConcert,
+                    CreatorId = userId,
+                    CreationTime = _clock.Now
+                } );
+            }
+            foreach (string concertTag in concert.Tags)
+            {
+                oldConcert.ConcertTags.Add( new ConcertTag
+                {
+                    Name = concertTag,
+                    Concert = oldConcert,
+                    CreatorId = userId,
+                    CreationTime = _clock.Now
+                } );
+            }
+
+            await _concertOneDbContext.SaveChangesAsync( cancellationToken );
         }
     }
 }

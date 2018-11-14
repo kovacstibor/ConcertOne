@@ -1,8 +1,6 @@
 ﻿using ConcertOne.Bll.Exception;
 using ConcertOne.Bll.Service;
-using ConcertOne.Dal.Entity;
 using ConcertOne.Dal.Identity;
-using ConcertOne.Web.ViewModels.TicketCategory;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -37,8 +35,8 @@ namespace ConcertOne.Web.Controllers
         {
             try
             {
-                IEnumerable<TicketCategory> ticketCategories = await _ticketCategoryService.GetTicketCategoriesAsync();
-                return Json( ticketCategories.Select( tc => new TicketCategoryViewModel( tc ) ).ToList() );
+                IEnumerable<string> ticketCategories = await _ticketCategoryService.GetTicketCategoriesAsync();
+                return Json( ticketCategories.ToList() );
             }
             catch
             {
@@ -47,37 +45,21 @@ namespace ConcertOne.Web.Controllers
         }
 
         [Authorize( Roles = "PRIVILEDGED" )]
-        [HttpPost]
+        [HttpPut]
         [Route( "api/v1/" + TicketCategoryController.Name )]
-        public async Task<IActionResult> CreateTicketCategoryAsync( [FromBody] TicketCategoryViewModel ticketCategory )
+        public async Task<IActionResult> UpdateTicketCategoryAsync( [FromBody] List<string> ticketCategories )
         {
             try
             {
                 Guid userId = await GetCurrentUserIdAsync();
-                await _ticketCategoryService.CreateTicketCategoryAsync(
-                    ticketCategory: ticketCategory.ToDto(),
+                await _ticketCategoryService.UpdateTicketCategoriesAsync(
+                    ticketCategories: ticketCategories,
                     userId: userId );
                 return StatusCode( 201 );
             }
-            catch
-            {
-                return StatusCode( 500 );
-            }
-        }
-
-        [Authorize( Roles = "PRIVILEDGED" )]
-        [HttpDelete]
-        [Route( "api/v1/" + TicketCategoryController.Name + "/{id}" )]
-        public async Task<IActionResult> DeleteTicketCategoryAsync( Guid id )
-        {
-            try
-            {
-                await _ticketCategoryService.DeleteTicketCategoryAsync( id );
-                return StatusCode( 204 );
-            }
             catch (BllException)
             {
-                return StatusCode( 404 );
+                return StatusCode( 400 );
             }
             catch
             {

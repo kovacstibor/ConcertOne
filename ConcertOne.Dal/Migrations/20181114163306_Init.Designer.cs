@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ConcertOne.Dal.Migrations
 {
     [DbContext(typeof(ConcertOneDbContext))]
-    [Migration("20181113185420_Init")]
+    [Migration("20181114163306_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,8 +27,6 @@ namespace ConcertOne.Dal.Migrations
                         .ValueGeneratedOnAdd();
 
                     b.Property<string>("Artist");
-
-                    b.Property<string>("AttachedImageUrl");
 
                     b.Property<DateTime>("CreationTime");
 
@@ -49,10 +47,12 @@ namespace ConcertOne.Dal.Migrations
                     b.ToTable("Concerts");
                 });
 
-            modelBuilder.Entity("ConcertOne.Dal.Entity.Ticket", b =>
+            modelBuilder.Entity("ConcertOne.Dal.Entity.ConcertTag", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
+
+                    b.Property<Guid?>("ConcertId");
 
                     b.Property<DateTime>("CreationTime");
 
@@ -62,17 +62,13 @@ namespace ConcertOne.Dal.Migrations
 
                     b.Property<Guid?>("LastModifierId");
 
-                    b.Property<Guid?>("TicketCategoryId");
-
-                    b.Property<Guid?>("TicketPurchaseId");
+                    b.Property<string>("Name");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TicketCategoryId");
+                    b.HasIndex("ConcertId");
 
-                    b.HasIndex("TicketPurchaseId");
-
-                    b.ToTable("Tickets");
+                    b.ToTable("ConcertTags");
                 });
 
             modelBuilder.Entity("ConcertOne.Dal.Entity.TicketCategory", b =>
@@ -88,11 +84,7 @@ namespace ConcertOne.Dal.Migrations
 
                     b.Property<Guid?>("LastModifierId");
 
-                    b.Property<string>("Monetary");
-
                     b.Property<string>("Name");
-
-                    b.Property<double>("UnitPrice");
 
                     b.HasKey("Id");
 
@@ -118,6 +110,8 @@ namespace ConcertOne.Dal.Migrations
 
                     b.Property<Guid?>("TicketCategoryId");
 
+                    b.Property<int>("UnitPrice");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ConcertId");
@@ -132,8 +126,6 @@ namespace ConcertOne.Dal.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<Guid?>("ConcertId");
-
                     b.Property<DateTime>("CreationTime");
 
                     b.Property<Guid>("CreatorId");
@@ -142,11 +134,13 @@ namespace ConcertOne.Dal.Migrations
 
                     b.Property<Guid?>("LastModifierId");
 
+                    b.Property<Guid?>("TicketLimitId");
+
                     b.Property<Guid?>("UserId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ConcertId");
+                    b.HasIndex("TicketLimitId");
 
                     b.HasIndex("UserId");
 
@@ -311,15 +305,11 @@ namespace ConcertOne.Dal.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
-            modelBuilder.Entity("ConcertOne.Dal.Entity.Ticket", b =>
+            modelBuilder.Entity("ConcertOne.Dal.Entity.ConcertTag", b =>
                 {
-                    b.HasOne("ConcertOne.Dal.Entity.TicketCategory", "TicketCategory")
-                        .WithMany("Tickets")
-                        .HasForeignKey("TicketCategoryId");
-
-                    b.HasOne("ConcertOne.Dal.Entity.TicketPurchase", "TicketPurchase")
-                        .WithMany("Tickets")
-                        .HasForeignKey("TicketPurchaseId");
+                    b.HasOne("ConcertOne.Dal.Entity.Concert", "Concert")
+                        .WithMany("ConcertTags")
+                        .HasForeignKey("ConcertId");
                 });
 
             modelBuilder.Entity("ConcertOne.Dal.Entity.TicketLimit", b =>
@@ -335,9 +325,9 @@ namespace ConcertOne.Dal.Migrations
 
             modelBuilder.Entity("ConcertOne.Dal.Entity.TicketPurchase", b =>
                 {
-                    b.HasOne("ConcertOne.Dal.Entity.Concert", "Concert")
+                    b.HasOne("ConcertOne.Dal.Entity.TicketLimit", "TicketLimit")
                         .WithMany("TicketPurchases")
-                        .HasForeignKey("ConcertId");
+                        .HasForeignKey("TicketLimitId");
 
                     b.HasOne("ConcertOne.Dal.Identity.User", "User")
                         .WithMany("TicketPurchases")

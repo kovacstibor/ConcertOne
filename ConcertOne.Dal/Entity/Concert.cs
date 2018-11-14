@@ -15,13 +15,11 @@ namespace ConcertOne.Dal.Entity
 
         public DateTime StartTime { get; set; }
 
-        public string AttachedImageUrl { get; set; }
-
         public string Description { get; set; }
 
-        public ICollection<TicketLimit> TicketLimits { get; set; }
+        public ICollection<ConcertTag> ConcertTags { get; set; }
 
-        public ICollection<TicketPurchase> TicketPurchases { get; set; }
+        public ICollection<TicketLimit> TicketLimits { get; set; }
 
         public Guid CreatorId { get; set; }
 
@@ -33,8 +31,8 @@ namespace ConcertOne.Dal.Entity
 
         public Concert()
         {
+            ConcertTags = new HashSet<ConcertTag>();
             TicketLimits = new HashSet<TicketLimit>();
-            TicketPurchases = new HashSet<TicketPurchase>();
         }
     }
 }

@@ -1,20 +1,19 @@
 ﻿using ConcertOne.Dal.Behavior;
-
 using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace ConcertOne.Dal.Entity
 {
-    public sealed class Ticket : IAuditableConcertOneEntity
+    public sealed class ConcertTag : IAuditableConcertOneEntity
     {
         public Guid Id { get; set; }
 
-        public Guid? TicketPurchaseId { get; set; }
+        public string Name { get; set; }
 
-        public TicketPurchase TicketPurchase { get; set; }
+        public Guid? ConcertId { get; set; }
 
-        public Guid? TicketCategoryId { get; set; }
-
-        public TicketCategory TicketCategory { get; set; }
+        public Concert Concert { get; set; }
 
         public Guid CreatorId { get; set; }
 

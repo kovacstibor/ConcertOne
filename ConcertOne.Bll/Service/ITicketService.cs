@@ -1,4 +1,4 @@
-﻿using ConcertOne.Dal.Entity;
+﻿using ConcertOne.Bll.Dto.TicketPurchase;
 
 using System;
 using System.Collections.Generic;
@@ -9,14 +9,14 @@ namespace ConcertOne.Bll.Service
 {
     public interface ITicketService
     {
-        Task<IEnumerable<Ticket>> GetPurchasedTickets(
+        Task<IEnumerable<TicketPurchaseListItemDto>> GetPurchasedTicketsAsync(
             Guid userId,
             CancellationToken cancellationToken = default( CancellationToken ) );
 
         Task PurchaseTicketAsync(
-            Guid userid,
             Guid concertId,
-            Dictionary<Guid, int> purchases,
+            Guid ticketCategoryId,
+            Guid userid,
             CancellationToken cancellationToken = default( CancellationToken ) );
     }
 }

@@ -134,24 +134,50 @@ namespace ConcertOne.Dal.DataContext
             Concert metallicaConcert = new Concert
             {
                 Artist = "Metallica",
-                AttachedImageUrl = "http://loyalty.production.townsquareblogs.com/files/2018/02/Metallica-fb.jpg?w=630&h=420&q=75",
                 CreationTime = _clock.Now,
                 CreatorId = priviledgedUser.Id,
                 Description = "Metallica concert description ...",
                 Location = "Papp László SportAréna",
                 StartTime = new DateTime( 2018, 5, 5 )
             };
+            metallicaConcert.ConcertTags.Add( new ConcertTag
+            {
+                Name = "trash",
+                Concert = metallicaConcert,
+                CreatorId = priviledgedUser.Id,
+                CreationTime = _clock.Now
+            } );
+            metallicaConcert.ConcertTags.Add( new ConcertTag
+            {
+                Name = "metal",
+                Concert = metallicaConcert,
+                CreatorId = priviledgedUser.Id,
+                CreationTime = _clock.Now
+            } );
 
             Concert edSheeranConcert = new Concert
             {
                 Artist = "Ed Sheeran",
-                AttachedImageUrl = "https://www.billboard.com/files/styles/article_main_image/public/media/ed-sheeran-the-voice-2015-billboard-650.jpg",
                 CreationTime = _clock.Now,
                 CreatorId = priviledgedUser.Id,
                 Description = "Ed Sheeran concert description ...",
                 Location = "Sziget Fesztivál",
                 StartTime = new DateTime( 2019, 8, 7 )
             };
+            edSheeranConcert.ConcertTags.Add( new ConcertTag
+            {
+                Name = "sziget",
+                Concert = metallicaConcert,
+                CreatorId = priviledgedUser.Id,
+                CreationTime = _clock.Now
+            } );
+            edSheeranConcert.ConcertTags.Add( new ConcertTag
+            {
+                Name = "ginger",
+                Concert = metallicaConcert,
+                CreatorId = priviledgedUser.Id,
+                CreationTime = _clock.Now
+            } );
 
             _concertOneDbContext.Concerts.Add( metallicaConcert );
             _concertOneDbContext.Concerts.Add( edSheeranConcert );

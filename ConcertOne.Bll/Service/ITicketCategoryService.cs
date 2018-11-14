@@ -1,6 +1,4 @@
-﻿using ConcertOne.Bll.Dto;
-using ConcertOne.Dal.Entity;
-
+﻿
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,15 +8,11 @@ namespace ConcertOne.Bll.Service
 {
     public interface ITicketCategoryService
     {
-        Task<IEnumerable<TicketCategory>> GetTicketCategoriesAsync( CancellationToken cancellationToken = default( CancellationToken ) );
+        Task<IEnumerable<string>> GetTicketCategoriesAsync( CancellationToken cancellationToken = default( CancellationToken ) );
 
-        Task CreateTicketCategoryAsync(
-            TicketCategoryDataDto ticketCategory,
+        Task UpdateTicketCategoriesAsync(
+            List<string> ticketCategories,
             Guid userId,
-            CancellationToken cancellationToken = default( CancellationToken ) );
-
-        Task DeleteTicketCategoryAsync(
-            Guid ticketCategoryId,
             CancellationToken cancellationToken = default( CancellationToken ) );
     }
 }

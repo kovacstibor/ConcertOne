@@ -55,7 +55,6 @@ namespace ConcertOne.Dal.Migrations
                     Artist = table.Column<string>(nullable: true),
                     Location = table.Column<string>(nullable: true),
                     StartTime = table.Column<DateTime>(nullable: false),
-                    AttachedImageUrl = table.Column<string>(nullable: true),
                     Description = table.Column<string>(nullable: true),
                     CreatorId = table.Column<Guid>(nullable: false),
                     CreationTime = table.Column<DateTime>(nullable: false),
@@ -73,8 +72,6 @@ namespace ConcertOne.Dal.Migrations
                 {
                     Id = table.Column<Guid>(nullable: false),
                     Name = table.Column<string>(nullable: true),
-                    UnitPrice = table.Column<double>(nullable: false),
-                    Monetary = table.Column<string>(nullable: true),
                     CreatorId = table.Column<Guid>(nullable: false),
                     CreationTime = table.Column<DateTime>(nullable: false),
                     LastModifierId = table.Column<Guid>(nullable: true),
@@ -192,11 +189,11 @@ namespace ConcertOne.Dal.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TicketPurchases",
+                name: "ConcertTags",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
-                    UserId = table.Column<Guid>(nullable: true),
+                    Name = table.Column<string>(nullable: true),
                     ConcertId = table.Column<Guid>(nullable: true),
                     CreatorId = table.Column<Guid>(nullable: false),
                     CreationTime = table.Column<DateTime>(nullable: false),
@@ -205,17 +202,11 @@ namespace ConcertOne.Dal.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TicketPurchases", x => x.Id);
+                    table.PrimaryKey("PK_ConcertTags", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TicketPurchases_Concerts_ConcertId",
+                        name: "FK_ConcertTags_Concerts_ConcertId",
                         column: x => x.ConcertId,
                         principalTable: "Concerts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_TicketPurchases_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -226,6 +217,7 @@ namespace ConcertOne.Dal.Migrations
                 {
                     Id = table.Column<Guid>(nullable: false),
                     Limit = table.Column<int>(nullable: false),
+                    UnitPrice = table.Column<int>(nullable: false),
                     ConcertId = table.Column<Guid>(nullable: true),
                     TicketCategoryId = table.Column<Guid>(nullable: true),
                     CreatorId = table.Column<Guid>(nullable: false),
@@ -251,12 +243,12 @@ namespace ConcertOne.Dal.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Tickets",
+                name: "TicketPurchases",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
-                    TicketPurchaseId = table.Column<Guid>(nullable: true),
-                    TicketCategoryId = table.Column<Guid>(nullable: true),
+                    UserId = table.Column<Guid>(nullable: true),
+                    TicketLimitId = table.Column<Guid>(nullable: true),
                     CreatorId = table.Column<Guid>(nullable: false),
                     CreationTime = table.Column<DateTime>(nullable: false),
                     LastModifierId = table.Column<Guid>(nullable: true),
@@ -264,17 +256,17 @@ namespace ConcertOne.Dal.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Tickets", x => x.Id);
+                    table.PrimaryKey("PK_TicketPurchases", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Tickets_TicketCategories_TicketCategoryId",
-                        column: x => x.TicketCategoryId,
-                        principalTable: "TicketCategories",
+                        name: "FK_TicketPurchases_TicketLimits_TicketLimitId",
+                        column: x => x.TicketLimitId,
+                        principalTable: "TicketLimits",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Tickets_TicketPurchases_TicketPurchaseId",
-                        column: x => x.TicketPurchaseId,
-                        principalTable: "TicketPurchases",
+                        name: "FK_TicketPurchases_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -319,6 +311,11 @@ namespace ConcertOne.Dal.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ConcertTags_ConcertId",
+                table: "ConcertTags",
+                column: "ConcertId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TicketLimits_ConcertId",
                 table: "TicketLimits",
                 column: "ConcertId");
@@ -329,24 +326,14 @@ namespace ConcertOne.Dal.Migrations
                 column: "TicketCategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TicketPurchases_ConcertId",
+                name: "IX_TicketPurchases_TicketLimitId",
                 table: "TicketPurchases",
-                column: "ConcertId");
+                column: "TicketLimitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketPurchases_UserId",
                 table: "TicketPurchases",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tickets_TicketCategoryId",
-                table: "Tickets",
-                column: "TicketCategoryId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tickets_TicketPurchaseId",
-                table: "Tickets",
-                column: "TicketPurchaseId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -367,25 +354,25 @@ namespace ConcertOne.Dal.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "TicketLimits");
-
-            migrationBuilder.DropTable(
-                name: "Tickets");
-
-            migrationBuilder.DropTable(
-                name: "AspNetRoles");
-
-            migrationBuilder.DropTable(
-                name: "TicketCategories");
+                name: "ConcertTags");
 
             migrationBuilder.DropTable(
                 name: "TicketPurchases");
 
             migrationBuilder.DropTable(
-                name: "Concerts");
+                name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "TicketLimits");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Concerts");
+
+            migrationBuilder.DropTable(
+                name: "TicketCategories");
         }
     }
 }

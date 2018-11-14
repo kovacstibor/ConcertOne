@@ -11,13 +11,7 @@ namespace ConcertOne.Dal.Entity
 
         public string Name { get; set; }
 
-        public double UnitPrice { get; set; }
-
-        public string Monetary { get; set; }
-
         public ICollection<TicketLimit> TicketLimits { get; set; }
-
-        public ICollection<Ticket> Tickets { get; set; }
 
         public Guid CreatorId { get; set; }
 
@@ -30,7 +24,6 @@ namespace ConcertOne.Dal.Entity
         public TicketCategory()
         {
             TicketLimits = new HashSet<TicketLimit>();
-            Tickets = new HashSet<Ticket>();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using ConcertOne.Bll.Dto;
+using ConcertOne.Bll.Dto.Concert;
 using ConcertOne.Dal.Entity;
 
 using System;
@@ -10,20 +11,20 @@ namespace ConcertOne.Bll.Service
 {
     public interface IConcertService
     {
-        Task<IEnumerable<Concert>> GetConcertsAsync( CancellationToken cancellationToken = default( CancellationToken ) );
+        Task<IEnumerable<ConcertListItemDto>> GetConcertsAsync( CancellationToken cancellationToken = default( CancellationToken ) );
 
-        Task<Concert> GetConcertDetailsAsync(
+        Task<ConcertDetailsDto> GetConcertDetailsAsync(
             Guid concertId,
             CancellationToken cancellationToken = default( CancellationToken ) );
 
         Task CreateConcertAsync(
-            ConcertDataDto concert,
+            CreateUpdateConcertDto concert,
             Guid userId,
             CancellationToken cancellationToken = default( CancellationToken ) );
 
         Task UpdateConcertAsync(
             Guid concertId,
-            ConcertDataDto modifiedConcert,
+            CreateUpdateConcertDto concert,
             Guid userId,
             CancellationToken cancellationToken = default( CancellationToken ) );
 

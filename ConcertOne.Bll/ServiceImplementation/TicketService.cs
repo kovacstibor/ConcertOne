@@ -1,4 +1,5 @@
-﻿using ConcertOne.Bll.Exception;
+﻿using ConcertOne.Bll.Dto.TicketPurchase;
+using ConcertOne.Bll.Exception;
 using ConcertOne.Bll.Service;
 using ConcertOne.Common.ServiceInterface;
 using ConcertOne.Dal.DataContext;
@@ -27,78 +28,59 @@ namespace ConcertOne.Bll.ServiceImplementation
             _concertOneDbContext = concertOneDbContext ?? throw new ArgumentNullException( nameof( concertOneDbContext ) );
         }
 
-        public async Task<IEnumerable<Ticket>> GetPurchasedTickets(
-            Guid userId,
-            CancellationToken cancellationToken = default( CancellationToken ) )
-        {
-            return await _concertOneDbContext.Tickets
-                            .AsNoTracking()
-                            .Include( t => t.TicketCategory )
-                            .Include( t => t.TicketPurchase )
-                                .ThenInclude( tp => tp.Concert )
-                            .Where( t => t.TicketPurchase.UserId == userId )
-                            .ToListAsync( cancellationToken );
-        }
-
         public async Task PurchaseTicketAsync(
-            Guid userId,
             Guid concertId,
-            Dictionary<Guid, int> purchases,
+            Guid ticketCategoryId,
+            Guid userId,
             CancellationToken cancellationToken = default( CancellationToken ) )
         {
-            if (purchases.Any( p => p.Value <= 0 ))
+            TicketLimit ticketLimit = await _concertOneDbContext.TicketLimits
+                                                .Include( tl => tl.TicketPurchases )
+                                                .Where( tl => tl.ConcertId == concertId )
+                                                .Where( tl => tl.TicketCategoryId == ticketCategoryId )
+                                                .SingleOrDefaultAsync( cancellationToken );
+            if (ticketLimit == null)
             {
-                throw new BllException( "Purchased ticket counts must be positive" );
+                throw new BllException( "Ticket limit not found!" );
             }
 
-            TicketPurchase newTicketPurchase = new TicketPurchase
+            if (ticketLimit.TicketPurchases.Count >= ticketLimit.Limit)
             {
-                ConcertId = concertId,
+                throw new BllException( "Tickets sold out to this ticket category!" );
+            }
+
+            ticketLimit.TicketPurchases.Add( new TicketPurchase
+            {
+                TicketLimit = ticketLimit,
                 UserId = userId,
                 CreatorId = userId,
                 CreationTime = _clock.Now
-            };
+            } );
 
-            foreach (KeyValuePair<Guid, int> ticketPurchase in purchases)
+            await _concertOneDbContext.SaveChangesAsync( cancellationToken );
+        }
+
+        public async Task<IEnumerable<TicketPurchaseListItemDto>> GetPurchasedTicketsAsync(
+            Guid userId,
+            CancellationToken cancellationToken )
+        {
+            List<TicketPurchase> ticketPurchases = await _concertOneDbContext.TicketPurchases
+                                                            .AsNoTracking()
+                                                            .Include( tp => tp.TicketLimit )
+                                                                .ThenInclude( tl => tl.TicketCategory )
+                                                            .Include( tp => tp.TicketLimit )
+                                                                .ThenInclude( tl => tl.Concert )
+                                                            .Where( tp => tp.UserId == userId )
+                                                            .ToListAsync( cancellationToken );
+            return ticketPurchases.Select( tp => new TicketPurchaseListItemDto
             {
-                int maxPurchaseCount = await _concertOneDbContext.TicketLimits
-                                                .Where( tl => tl.TicketCategoryId == ticketPurchase.Key )
-                                                .Where( tl => tl.ConcertId == concertId )
-                                                .Select( tl => tl.Limit )
-                                                .SingleAsync( cancellationToken );
-                int currentPurchaseCount = await _concertOneDbContext.Tickets
-                                                    .Where( t => t.TicketCategoryId == ticketPurchase.Key )
-                                                    .Where( t => t.TicketPurchase.ConcertId == concertId )
-                                                    .CountAsync( cancellationToken );
-
-                if (currentPurchaseCount + ticketPurchase.Value > maxPurchaseCount)
-                {
-                    throw new BllException( "Ticket limit is exceeded!" );
-                }
-
-                for (int i = 0; i < ticketPurchase.Value; ++i)
-                {
-                    Ticket newTicket = new Ticket
-                    {
-                        TicketPurchase = newTicketPurchase,
-                        TicketCategoryId = ticketPurchase.Key,
-                        CreatorId = userId,
-                        CreationTime = _clock.Now
-                    };
-                    newTicketPurchase.Tickets.Add( newTicket );
-                }
-            }
-
-            _concertOneDbContext.TicketPurchases.Add( newTicketPurchase );
-
-            try
-            {
-                await _concertOneDbContext.SaveChangesAsync( cancellationToken );
-            }
-            catch
-            {
-                throw new BllException( "Error while purchasing" );
-            }
+                Artist = tp.TicketLimit.Concert.Artist,
+                Location = tp.TicketLimit.Concert.Location,
+                PurchaseTime = tp.CreationTime,
+                StartTime = tp.TicketLimit.Concert.StartTime,
+                TicketCategory = tp.TicketLimit.TicketCategory.Name,
+                UnitPrice = tp.TicketLimit.UnitPrice
+            } );
         }
     }
 }

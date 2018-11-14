@@ -1,7 +1,6 @@
-﻿using ConcertOne.Bll.Dto;
+﻿using ConcertOne.Bll.Dto.Concert;
 using ConcertOne.Bll.Exception;
 using ConcertOne.Bll.Service;
-using ConcertOne.Dal.Entity;
 using ConcertOne.Dal.Identity;
 using ConcertOne.Web.ViewModels.Concert;
 
@@ -38,8 +37,8 @@ namespace ConcertOne.Web.Controllers
         {
             try
             {
-                IEnumerable<Concert> concerts = await _concertService.GetConcertsAsync();
-                return Json( concerts.Select( c => new ConcertViewModel( c ) ).ToList() );
+                IEnumerable<ConcertListItemDto> concerts = await _concertService.GetConcertsAsync();
+                return Json( concerts.Select( c => new ConcertListItemViewModel( c ) ).ToList() );
             }
             catch
             {
@@ -54,7 +53,7 @@ namespace ConcertOne.Web.Controllers
         {
             try
             {
-                Concert concertDetails = await _concertService.GetConcertDetailsAsync( id );
+                ConcertDetailsDto concertDetails = await _concertService.GetConcertDetailsAsync( id );
                 return Json( new ConcertDetailsViewModel( concertDetails ) );
             }
             catch (BllException)
@@ -70,13 +69,13 @@ namespace ConcertOne.Web.Controllers
         [Authorize( Roles = "PRIVILEDGED" )]
         [HttpPost]
         [Route( "api/v1/" + ConcertController.Name )]
-        public async Task<IActionResult> CreateConcertAsync( [FromBody] ConcertDataDto concert )
+        public async Task<IActionResult> CreateConcertAsync( [FromBody] ConcertCreateUpdateViewModel concert )
         {
             try
             {
                 Guid userId = await GetCurrentUserIdAsync();
                 await _concertService.CreateConcertAsync(
-                    concert: concert,
+                    concert: concert.ToDto(),
                     userId: userId );
                 return StatusCode( 201 );
             }
@@ -95,14 +94,14 @@ namespace ConcertOne.Web.Controllers
         [Route( "api/v1/" + ConcertController.Name + "/{id}" )]
         public async Task<IActionResult> UpdateConcertAsync(
             Guid id,
-            [FromBody] ConcertDataDto concert )
+            [FromBody] ConcertCreateUpdateViewModel concert )
         {
             try
             {
                 Guid userId = await GetCurrentUserIdAsync();
                 await _concertService.UpdateConcertAsync(
                     concertId: id,
-                    modifiedConcert: concert,
+                    concert: concert.ToDto(),
                     userId: userId );
                 return StatusCode( 204 );
             }

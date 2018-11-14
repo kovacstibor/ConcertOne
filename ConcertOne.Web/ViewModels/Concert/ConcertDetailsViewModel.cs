@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using ConcertOne.Bll.Dto.Concert;
+
+using Newtonsoft.Json;
 
 using System;
 using System.Collections.Generic;
@@ -14,6 +16,9 @@ namespace ConcertOne.Web.ViewModels.Concert
         [JsonProperty( "Artist" )]
         public string Artist { get; set; }
 
+        [JsonProperty( "AvailableTickets" )]
+        public List<TicketLimitViewModel> AvailableTickets { get; set; }
+
         [JsonProperty( "Description" )]
         public string Description { get; set; }
 
@@ -23,35 +28,30 @@ namespace ConcertOne.Web.ViewModels.Concert
         [JsonProperty( "StartTime" )]
         public DateTime StartTime { get; set; }
 
-        [JsonProperty( "AttachedImageUrl" )]
-        public string AttachedImageUrl { get; set; }
-
-        [JsonProperty( "TicketLimits" )]
-        public List<TicketLimitViewModel> TicketLimits { get; set; }
+        [JsonProperty( "Tags" )]
+        public List<string> Tags { get; set; }
 
         public ConcertDetailsViewModel()
         {
-            TicketLimits = new List<TicketLimitViewModel>();
+            AvailableTickets = new List<TicketLimitViewModel>();
         }
 
-        public ConcertDetailsViewModel( Dal.Entity.Concert concert )
+        public ConcertDetailsViewModel( ConcertDetailsDto concertDetailsDto )
             : this()
         {
-            if (concert == null)
+            if (concertDetailsDto == null)
             {
-                throw new ArgumentNullException( nameof( concert ) );
+                throw new ArgumentNullException( nameof( concertDetailsDto ) );
             }
-            Id = concert.Id;
-            Artist = concert.Artist;
-            Description = concert.Description;
-            Location = concert.Location;
-            StartTime = concert.StartTime;
-            AttachedImageUrl = concert.AttachedImageUrl;
-
-            if (concert.TicketLimits != null)
-            {
-                TicketLimits = concert.TicketLimits.Select( tl => new TicketLimitViewModel( tl ) ).ToList();
-            }
+            Id = concertDetailsDto.Id;
+            Artist = concertDetailsDto.Artist;
+            Description = concertDetailsDto.Description;
+            Location = concertDetailsDto.Location;
+            StartTime = concertDetailsDto.StartTime;
+            Tags = concertDetailsDto.Tags;
+            AvailableTickets = concertDetailsDto.AvailableTickets
+                                                .Select( at => new TicketLimitViewModel( at ) )
+                                                .ToList();
         }
     }
 }

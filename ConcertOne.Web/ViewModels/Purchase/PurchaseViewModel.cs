@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 
 using System;
-using System.Collections.Generic;
 
 namespace ConcertOne.Web.ViewModels.Purchase
 {
@@ -10,12 +9,7 @@ namespace ConcertOne.Web.ViewModels.Purchase
         [JsonProperty( "ConcertId" )]
         public Guid ConcertId { get; set; }
 
-        [JsonProperty( "PurchasedTickets" )]
-        public Dictionary<Guid, int> PurchasedTickets { get; set; }
-
-        public PurchaseViewModel()
-        {
-            PurchasedTickets = new Dictionary<Guid, int>();
-        }
+        [JsonProperty( "TicketCategoryId" )]
+        public Guid TicketCategoryId { get; set; }
     }
 }

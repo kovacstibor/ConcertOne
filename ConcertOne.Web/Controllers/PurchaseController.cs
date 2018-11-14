@@ -1,4 +1,5 @@
-﻿using ConcertOne.Bll.Exception;
+﻿using ConcertOne.Bll.Dto.TicketPurchase;
+using ConcertOne.Bll.Exception;
 using ConcertOne.Bll.Service;
 using ConcertOne.Dal.Entity;
 using ConcertOne.Dal.Identity;
@@ -38,8 +39,8 @@ namespace ConcertOne.Web.Controllers
             try
             {
                 var userId = await GetCurrentUserIdAsync();
-                IEnumerable<Ticket> purchasedTickets = await _ticketService.GetPurchasedTickets( userId );
-                return Json( purchasedTickets.Select( tp => new TicketViewModel( tp ) ).ToList() );
+                IEnumerable<TicketPurchaseListItemDto> purchasedTickets = await _ticketService.GetPurchasedTicketsAsync( userId );
+                return Json( purchasedTickets.Select( tp => new PurchaseListItemViewModel( tp ) ).ToList() );
             }
             catch
             {
@@ -56,9 +57,9 @@ namespace ConcertOne.Web.Controllers
             {
                 Guid userId = await GetCurrentUserIdAsync();
                 await _ticketService.PurchaseTicketAsync(
-                    userid: userId,
                     concertId: purchase.ConcertId,
-                    purchases: purchase.PurchasedTickets );
+                    ticketCategoryId: purchase.TicketCategoryId,
+                    userid: userId );
                 return StatusCode( 201 );
             }
             catch (BllException)

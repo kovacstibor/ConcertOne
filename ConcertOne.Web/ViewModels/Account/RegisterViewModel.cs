@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ConcertOne.Web.ViewModels.Account
 {
-    public class RegisterViewModel : ViewModelBase
+    public class RegisterViewModel
     {
         [JsonProperty( "EmailAddress" )]
         [Required]
@@ -14,12 +14,5 @@ namespace ConcertOne.Web.ViewModels.Account
         [Required]
         [MinLength( 8 )]
         public string Password { get; set; }
-
-        public RegisterViewModel()
-            : base()
-        {
-            EmailAddress = string.Empty;
-            Password = string.Empty;
-        }
     }
 }

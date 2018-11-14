@@ -2,7 +2,6 @@
 using ConcertOne.Dal.Identity;
 
 using System;
-using System.Collections.Generic;
 
 namespace ConcertOne.Dal.Entity
 {
@@ -14,23 +13,16 @@ namespace ConcertOne.Dal.Entity
 
         public User User { get; set; }
 
-        public Guid? ConcertId { get; set; }
+        public Guid? TicketLimitId { get; set; }
 
-        public Concert Concert { get; set; }
+        public TicketLimit TicketLimit { get; set; }
 
         public Guid CreatorId { get; set; }
-
-        public ICollection<Ticket> Tickets { get; set; }
 
         public DateTime CreationTime { get; set; }
 
         public Guid? LastModifierId { get; set; }
 
         public DateTime? LastModificationTime { get; set; }
-
-        public TicketPurchase()
-        {
-            Tickets = new HashSet<Ticket>();
-        }
     }
 }
