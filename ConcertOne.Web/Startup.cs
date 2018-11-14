@@ -4,7 +4,7 @@ using ConcertOne.Common.Service;
 using ConcertOne.Common.ServiceInterface;
 using ConcertOne.Dal.DataContext;
 using ConcertOne.Dal.Identity;
-
+using ConcertOne.Web.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -28,7 +28,6 @@ namespace ConcertOne.Web
 
         public void ConfigureServices( IServiceCollection services )
         {
-            // Register cookie policy services to conform the GDPR regulations
             services.Configure<CookiePolicyOptions>( options =>
             {
                 options.CheckConsentNeeded = context => true;
@@ -49,10 +48,8 @@ namespace ConcertOne.Web
             services.AddMvc()
                 .SetCompatibilityVersion( CompatibilityVersion.Version_2_1 );
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddCors(options =>
-            {
-                options.AddDefaultPolicy( builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod() );
-            } );
+            services.AddCors();
+            services.AddSingleton<SessionIdService>();
 
             // Register .Common services
             services.AddSingleton<IClock, Clock>();
@@ -87,9 +84,12 @@ namespace ConcertOne.Web
             applicationPipeline.UseStaticFiles();
             applicationPipeline.UseCookiePolicy();
 
-            applicationPipeline.UseAuthentication();
+            applicationPipeline.UseCors( builder => builder.AllowAnyOrigin()
+                                                        .AllowAnyHeader()
+                                                        .AllowAnyMethod()
+                                                        .AllowCredentials() );
 
-            applicationPipeline.UseCors();
+            applicationPipeline.UseAuthentication();
 
             applicationPipeline.UseMvc();
 

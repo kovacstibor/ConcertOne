@@ -2,6 +2,7 @@
 using ConcertOne.Bll.Exception;
 using ConcertOne.Bll.Service;
 using ConcertOne.Dal.Identity;
+using ConcertOne.Web.Services;
 using ConcertOne.Web.ViewModels.Concert;
 
 using Microsoft.AspNetCore.Authorization;
@@ -20,13 +21,16 @@ namespace ConcertOne.Web.Controllers
         public const string Name = "Concert";
 
         private readonly IConcertService _concertService;
+        private readonly SessionIdService _sessionIdService;
         private readonly UserManager<User> _userManager;
 
         public ConcertController(
             IConcertService concertService,
+            SessionIdService sessionIdService,
             UserManager<User> userManager )
         {
             _concertService = concertService ?? throw new ArgumentNullException( nameof( concertService ) );
+            _sessionIdService = sessionIdService ?? throw new ArgumentNullException( nameof( sessionIdService ) );
             _userManager = userManager ?? throw new ArgumentNullException( nameof( userManager ) );
         }
 
@@ -66,14 +70,21 @@ namespace ConcertOne.Web.Controllers
             }
         }
 
-        [Authorize( Roles = "PRIVILEDGED" )]
+        [AllowAnonymous]
         [HttpPost]
         [Route( "api/v1/" + ConcertController.Name )]
-        public async Task<IActionResult> CreateConcertAsync( [FromBody] ConcertCreateUpdateViewModel concert )
+        public async Task<IActionResult> CreateConcertAsync(
+            [FromHeader( Name = "SessionId" )] string sessionId,
+            [FromBody] ConcertCreateUpdateViewModel concert )
         {
+            if (!_sessionIdService.IsPriviledged( sessionId ))
+            {
+                return StatusCode( 401 );
+            }
+
             try
             {
-                Guid userId = await GetCurrentUserIdAsync();
+                Guid userId = _sessionIdService.GetUserId( sessionId );
                 await _concertService.CreateConcertAsync(
                     concert: concert.ToDto(),
                     userId: userId );
@@ -89,16 +100,22 @@ namespace ConcertOne.Web.Controllers
             }
         }
 
-        [Authorize( Roles = "PRIVILEDGED" )]
+        [AllowAnonymous]
         [HttpPut]
         [Route( "api/v1/" + ConcertController.Name + "/{id}" )]
         public async Task<IActionResult> UpdateConcertAsync(
             Guid id,
+            [FromHeader( Name = "SessionId" )] string sessionId,
             [FromBody] ConcertCreateUpdateViewModel concert )
         {
+            if (!_sessionIdService.IsPriviledged( sessionId ))
+            {
+                return StatusCode( 401 );
+            }
+
             try
             {
-                Guid userId = await GetCurrentUserIdAsync();
+                Guid userId = _sessionIdService.GetUserId( sessionId );
                 await _concertService.UpdateConcertAsync(
                     concertId: id,
                     concert: concert.ToDto(),
@@ -115,11 +132,18 @@ namespace ConcertOne.Web.Controllers
             }
         }
 
-        [Authorize( Roles = "PRIVILEDGED" )]
+        [AllowAnonymous]
         [HttpDelete]
         [Route( "api/v1/" + ConcertController.Name + "/{id}" )]
-        public async Task<IActionResult> DeleteConcertAsync( Guid id )
+        public async Task<IActionResult> DeleteConcertAsync(
+            Guid id,
+            [FromHeader( Name = "SessionId" )] string sessionId )
         {
+            if (!_sessionIdService.IsPriviledged( sessionId ))
+            {
+                return StatusCode( 401 );
+            }
+
             try
             {
                 await _concertService.DeleteConcertAsync( id );
@@ -133,17 +157,6 @@ namespace ConcertOne.Web.Controllers
             {
                 return StatusCode( 500 );
             }
-        }
-
-        private async Task<Guid> GetCurrentUserIdAsync()
-        {
-            User currentUser = await _userManager.GetUserAsync( User );
-            if (currentUser == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return currentUser.Id;
         }
     }
 }
