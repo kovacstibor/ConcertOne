@@ -14,11 +14,17 @@ namespace ConcertOne.Web.ViewModels.Purchase
         [JsonProperty( "Location" )]
         public string Location { get; set; }
 
+        [JsonProperty( "PurchaseDate" )]
+        public string PurchaseDate { get; set; }
+
         [JsonProperty( "PurchaseTime" )]
-        public DateTime PurchaseTime { get; set; }
+        public string PurchaseTime { get; set; }
+
+        [JsonProperty( "StartDate" )]
+        public string StartDate { get; set; }
 
         [JsonProperty( "StartTime" )]
-        public DateTime StartTime { get; set; }
+        public string StartTime { get; set; }
 
         [JsonProperty( "UnitPrice" )]
         public int UnitPrice { get; set; }
@@ -41,8 +47,10 @@ namespace ConcertOne.Web.ViewModels.Purchase
 
             Artist = purchaseListItemDto.Artist;
             Location = purchaseListItemDto.Location;
-            PurchaseTime = purchaseListItemDto.PurchaseTime;
-            StartTime = purchaseListItemDto.StartTime;
+            PurchaseDate = purchaseListItemDto.PurchaseTime.ToString( "yyyy-MM-dd" );
+            PurchaseTime = purchaseListItemDto.PurchaseTime.ToString( "HH:mm" );
+            StartDate = purchaseListItemDto.StartTime.ToString( "yyyy-MM-dd" );
+            StartTime = purchaseListItemDto.StartTime.ToString( "HH:mm" );
             TicketCategory = purchaseListItemDto.TicketCategory;
             UnitPrice = purchaseListItemDto.UnitPrice;
         }

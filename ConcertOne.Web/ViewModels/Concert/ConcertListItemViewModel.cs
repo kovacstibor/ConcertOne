@@ -18,8 +18,11 @@ namespace ConcertOne.Web.ViewModels.Concert
         [JsonProperty( "Location" )]
         public string Location { get; set; }
 
+        [JsonProperty( "StartDate" )]
+        public string StartDate { get; set; }
+
         [JsonProperty( "StartTime" )]
-        public DateTime StartTime { get; set; }
+        public string StartTime { get; set; }
 
         [JsonProperty( "Tags" )]
         public List<string> Tags { get; set; }
@@ -43,7 +46,8 @@ namespace ConcertOne.Web.ViewModels.Concert
             Id = concertListItemDto.Id;
             Artist = concertListItemDto.Artist;
             Location = concertListItemDto.Location;
-            StartTime = concertListItemDto.StartTime;
+            StartDate = concertListItemDto.StartTime.ToString( "yyyy-MM-dd" );
+            StartTime = concertListItemDto.StartTime.ToString( "HH:mm" );
             Tags = concertListItemDto.Tags;
             AvailableTickets = concertListItemDto.AvailableTickets;
         }

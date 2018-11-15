@@ -1,4 +1,5 @@
-﻿using ConcertOne.Bll.Exception;
+﻿using ConcertOne.Bll.Dto.TicketCategory;
+using ConcertOne.Bll.Exception;
 using ConcertOne.Bll.Service;
 using ConcertOne.Common.ServiceInterface;
 using ConcertOne.Dal.DataContext;
@@ -32,6 +33,18 @@ namespace ConcertOne.Bll.ServiceImplementation
                             .AsNoTracking()
                             .Select( tc => tc.Name )
                             .ToListAsync( cancellationToken );
+        }
+
+        public async Task<IEnumerable<TicketCategoryListItemDto>> GetTicketCategoriesWithIdsAsync( CancellationToken cancellationToken = default( CancellationToken ) )
+        {
+            List<TicketCategory> ticketCategories = await _concertOneDbContext.TicketCategories
+                                                            .AsNoTracking()
+                                                            .ToListAsync( cancellationToken );
+            return ticketCategories.Select( tc => new TicketCategoryListItemDto
+            {
+                Id = tc.Id,
+                Name = tc.Name
+            } );
         }
 
         public async Task UpdateTicketCategoriesAsync(

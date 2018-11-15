@@ -1,8 +1,9 @@
-﻿using ConcertOne.Bll.Exception;
+﻿using ConcertOne.Bll.Dto.TicketCategory;
+using ConcertOne.Bll.Exception;
 using ConcertOne.Bll.Service;
 using ConcertOne.Dal.Identity;
 using ConcertOne.Web.Services;
-
+using ConcertOne.Web.ViewModels.TicketCategory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -46,6 +47,27 @@ namespace ConcertOne.Web.Controllers
             {
                 IEnumerable<string> ticketCategories = await _ticketCategoryService.GetTicketCategoriesAsync();
                 return Json( ticketCategories.ToList() );
+            }
+            catch
+            {
+                return StatusCode( 500 );
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        [Route( "api/v1/" + TicketCategoryController.Name + "/List" )]
+        public async Task<IActionResult> GetTicketCategoriesWithIdsAsync( [FromHeader( Name = "SessionId" )] string sessionId )
+        {
+            if (!_sessionIdService.IsPriviledged( sessionId ))
+            {
+                return StatusCode( 401 );
+            }
+
+            try
+            {
+                IEnumerable<TicketCategoryListItemDto> ticketCategories = await _ticketCategoryService.GetTicketCategoriesWithIdsAsync();
+                return Json( ticketCategories.Select( tc => new TicketCategoryListItemViewModel( tc ) ).ToList() );
             }
             catch
             {

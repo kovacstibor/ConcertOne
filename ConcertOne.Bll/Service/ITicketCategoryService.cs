@@ -1,4 +1,5 @@
 ﻿
+using ConcertOne.Bll.Dto.TicketCategory;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,6 +10,8 @@ namespace ConcertOne.Bll.Service
     public interface ITicketCategoryService
     {
         Task<IEnumerable<string>> GetTicketCategoriesAsync( CancellationToken cancellationToken = default( CancellationToken ) );
+
+        Task<IEnumerable<TicketCategoryListItemDto>> GetTicketCategoriesWithIdsAsync( CancellationToken cancellationToken = default( CancellationToken ) );
 
         Task UpdateTicketCategoriesAsync(
             List<string> ticketCategories,
