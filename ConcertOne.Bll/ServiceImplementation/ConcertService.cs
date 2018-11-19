@@ -173,23 +173,19 @@ namespace ConcertOne.Bll.ServiceImplementation
             Guid userId,
             CancellationToken cancellationToken = default( CancellationToken ) )
         {
-            if (concert.TicketLimits.Any( tl => tl.Limit <= 0 ))
+            if (concert.TicketLimits.Any( tl => tl.Limit < 0 ))
             {
-                throw new BllException( "Ticket limits must be positive!" );
+                throw new BllException( "Ticket limits must be non.negative!" );
             }
 
             if (concert.TicketLimits.Any( tl => tl.UnitPrice < 0 ))
             {
-                throw new BllException( "Ticket prices must be non-negatives!" );
+                throw new BllException( "Ticket prices must be non-negative!" );
             }
 
             bool hasPurchasedTicket = await _concertOneDbContext.TicketPurchases
                                                 .Where( tp => tp.TicketLimit.ConcertId == concertId )
                                                 .AnyAsync( cancellationToken );
-            if (hasPurchasedTicket)
-            {
-                throw new BllException( "Concert cannot be updated, as there are purchased tickets!" );
-            }
 
             Concert oldConcert = await _concertOneDbContext.Concerts
                                             .Include( c => c.ConcertTags )
@@ -197,38 +193,41 @@ namespace ConcertOne.Bll.ServiceImplementation
                                             .Where( c => c.Id == concertId )
                                             .SingleAsync( cancellationToken );
 
-            _concertOneDbContext.TicketLimits.RemoveRange( oldConcert.TicketLimits );
-            _concertOneDbContext.ConcertTags.RemoveRange( oldConcert.ConcertTags );
-
             oldConcert.Artist = concert.Artist;
             oldConcert.Description = concert.Description;
             oldConcert.Location = concert.Location;
             oldConcert.StartTime = concert.StartTime;
             oldConcert.LastModifierId = userId;
             oldConcert.LastModificationTime = _clock.Now;
-            oldConcert.ConcertTags.Clear();
-            oldConcert.TicketLimits.Clear();
-            foreach (TicketLimitDto limit in concert.TicketLimits)
+
+            if (!hasPurchasedTicket)
             {
-                oldConcert.TicketLimits.Add( new TicketLimit
+                _concertOneDbContext.TicketLimits.RemoveRange( oldConcert.TicketLimits );
+                _concertOneDbContext.ConcertTags.RemoveRange( oldConcert.ConcertTags );
+                oldConcert.ConcertTags.Clear();
+                oldConcert.TicketLimits.Clear();
+                foreach (TicketLimitDto limit in concert.TicketLimits)
                 {
-                    Limit = limit.Limit,
-                    UnitPrice = limit.UnitPrice,
-                    TicketCategoryId = limit.TicketCategoryId,
-                    Concert = oldConcert,
-                    CreatorId = userId,
-                    CreationTime = _clock.Now
-                } );
-            }
-            foreach (string concertTag in concert.Tags)
-            {
-                oldConcert.ConcertTags.Add( new ConcertTag
+                    oldConcert.TicketLimits.Add( new TicketLimit
+                    {
+                        Limit = limit.Limit,
+                        UnitPrice = limit.UnitPrice,
+                        TicketCategoryId = limit.TicketCategoryId,
+                        Concert = oldConcert,
+                        CreatorId = userId,
+                        CreationTime = _clock.Now
+                    } );
+                }
+                foreach (string concertTag in concert.Tags)
                 {
-                    Name = concertTag,
-                    Concert = oldConcert,
-                    CreatorId = userId,
-                    CreationTime = _clock.Now
-                } );
+                    oldConcert.ConcertTags.Add( new ConcertTag
+                    {
+                        Name = concertTag,
+                        Concert = oldConcert,
+                        CreatorId = userId,
+                        CreationTime = _clock.Now
+                    } );
+                }
             }
 
             await _concertOneDbContext.SaveChangesAsync( cancellationToken );
