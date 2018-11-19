@@ -14,6 +14,9 @@ namespace ConcertOne.Web.ViewModels.Concert
         [JsonProperty( "Limit" )]
         public int Limit { get; set; }
 
+        [JsonProperty("RemainingCount")]
+        public int RemainingCount { get; set; }
+
         [JsonProperty( "UnitPrice" )]
         public int UnitPrice { get; set; }
 
@@ -38,6 +41,7 @@ namespace ConcertOne.Web.ViewModels.Concert
 
             IsAvailable = ticketLimitDto.IsAvailable;
             Limit = ticketLimitDto.Limit;
+            RemainingCount = ticketLimitDto.RemainigCount;
             UnitPrice = ticketLimitDto.UnitPrice;
             TicketCategoryId = ticketLimitDto.TicketCategoryId;
             TicketCategoryName = ticketLimitDto.TicketCategoryName;
@@ -49,6 +53,7 @@ namespace ConcertOne.Web.ViewModels.Concert
             {
                 IsAvailable = IsAvailable,
                 Limit = Limit,
+                RemainigCount = RemainingCount,
                 UnitPrice = UnitPrice,
                 TicketCategoryId = TicketCategoryId,
                 TicketCategoryName = TicketCategoryName

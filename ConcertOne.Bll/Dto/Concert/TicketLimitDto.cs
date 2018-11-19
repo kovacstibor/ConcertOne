@@ -8,6 +8,8 @@ namespace ConcertOne.Bll.Dto.Concert
 
         public int Limit { get; set; }
 
+        public int RemainigCount { get; set; }
+
         public int UnitPrice { get; set; }
 
         public Guid TicketCategoryId { get; set; }

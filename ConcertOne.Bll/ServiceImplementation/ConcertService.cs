@@ -52,7 +52,7 @@ namespace ConcertOne.Bll.ServiceImplementation
                 CreatorId = userId,
                 CreationTime = _clock.Now
             };
-            foreach (TicketLimitDto limit in concert.TicketLimits.Where( tl => tl.Limit > 0 ))
+            foreach (TicketLimitDto limit in concert.TicketLimits.Where( tl => tl.Limit >= 0 ))
             {
                 newConcert.TicketLimits.Add( new TicketLimit
                 {
@@ -134,6 +134,7 @@ namespace ConcertOne.Bll.ServiceImplementation
                 {
                     IsAvailable = tl.TicketPurchases.Count < tl.Limit,
                     Limit = tl.Limit,
+                    RemainigCount = tl.Limit - tl.TicketPurchases.Count,
                     UnitPrice = tl.UnitPrice,
                     TicketCategoryId = tl.TicketCategoryId.Value,
                     TicketCategoryName = tl.TicketCategory.Name

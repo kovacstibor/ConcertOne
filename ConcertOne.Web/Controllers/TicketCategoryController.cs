@@ -38,7 +38,7 @@ namespace ConcertOne.Web.Controllers
         [Route( "api/v1/" + TicketCategoryController.Name )]
         public async Task<IActionResult> GetTicketCategoriesAsync( [FromHeader( Name = "SessionId" )] string sessionId )
         {
-            if (!_sessionIdService.IsPriviledged( sessionId ))
+            if (!_sessionIdService.IsValidSessionId( sessionId ))
             {
                 return StatusCode( 401 );
             }
@@ -59,7 +59,7 @@ namespace ConcertOne.Web.Controllers
         [Route( "api/v1/" + TicketCategoryController.Name + "/List" )]
         public async Task<IActionResult> GetTicketCategoriesWithIdsAsync( [FromHeader( Name = "SessionId" )] string sessionId )
         {
-            if (!_sessionIdService.IsPriviledged( sessionId ))
+            if (!_sessionIdService.IsValidSessionId( sessionId ))
             {
                 return StatusCode( 401 );
             }
