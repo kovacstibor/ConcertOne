@@ -93,6 +93,7 @@ namespace ConcertOne.Bll.ServiceImplementation
 
             Concert concert = await _concertOneDbContext.Concerts
                                         .Include( c => c.TicketLimits )
+                                        .Include( c => c.ConcertTags )
                                         .Where( c => c.Id == concertId )
                                         .SingleOrDefaultAsync( cancellationToken );
             if (concert == null)
@@ -101,6 +102,7 @@ namespace ConcertOne.Bll.ServiceImplementation
             }
 
             _concertOneDbContext.TicketLimits.RemoveRange( concert.TicketLimits );
+            _concertOneDbContext.ConcertTags.RemoveRange( concert.ConcertTags );
             _concertOneDbContext.Concerts.Remove( concert );
             await _concertOneDbContext.SaveChangesAsync( cancellationToken );
         }
